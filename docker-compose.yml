@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: connectax_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: connectax_user
+      POSTGRES_PASSWORD: connectax_password
+      POSTGRES_DB: connectax_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: connectax_redis
+    restart: always
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+
+  opensearch:
+    image: opensearchproject/opensearch:2.11.0
+    container_name: connectax_opensearch
+    environment:
+      - cluster.name=connectax-opensearch-cluster
+      - node.name=connectax-opensearch-node
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=Admin@12345
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    ports:
+      - 9200:9200
+      - 9600:9600
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
+
+volumes:
+  postgres_data:
+  redis_data:
+  opensearch_data:
