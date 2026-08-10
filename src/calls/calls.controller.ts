@@ -24,7 +24,8 @@ export class CallsController {
     @Query('channelName') channelName: string,
     @Query('uid') uid: string,
   ) {
-    const numericUid = parseInt(uid, 10) || Math.floor(Math.random() * 1000000);
+    const parsedUid = parseInt(uid, 10);
+    const numericUid = isNaN(parsedUid) ? Math.floor(Math.random() * 1000000) : parsedUid;
     const token = this.callingService.generateToken(channelName, numericUid);
     return { token, uid: numericUid };
   }
@@ -36,6 +37,7 @@ export class CallsController {
     @Body('callerName') callerName: string,
     @Body('channelName') channelName: string,
     @Body('pricePerMinute') pricePerMinute: number,
+    @Body('callType') callType: string,
   ) {
     try {
       const expertDoc = await getFirestore().collection('experts').doc(expertId).get();
@@ -53,11 +55,12 @@ export class CallsController {
       await this.notificationsService.sendPushNotification(
         fcmToken,
         'Incoming Call',
-        `Incoming call from ${callerName}`,
+        `Incoming ${callType || 'audio'} call from ${callerName}`,
         {
           click_action: 'FLUTTER_NOTIFICATION_CLICK',
           callId,
           callerName,
+          callType: callType || 'audio',
           channelName,
           pricePerMinute: pricePerMinute.toString(),
           type: 'incoming_call',
